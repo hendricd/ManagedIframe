@@ -1,0 +1,31 @@
+
+
+.x-miframe-component {
+    .x-miframe-element {
+        width:100%;
+        height:100%;
+        border:none;
+        z-index:2;
+        top:0;
+        left:0;
+        border: 0px none transparent;
+
+    }
+    .x-miframe-shim
+    {
+        position:absolute;top:0;left:0;
+        z-index:20;height:100%;width:100%;
+    }
+}
+
+.x-miframe-element[seamless],
+.x-miframe-element[seamless="*"]:not([seamless="false"]):not([seamless="no"]) {
+        width:100%;
+        height:auto;
+        padding: 0px;
+        margin:0px;
+        border: 0px none transparent;
+        background-color: transparent;
+        overflow:hidden;
+    }
+

@@ -1,0 +1,13 @@
+{
+    "name": "miframe",
+    "type": "${args.type}",
+    "type" : "code",
+    "creator": "Active Group, Inc.",
+    "summary": "ManagedIframe Component/Element",
+    "detailedDescription": "A comprehensive Component class for managing IFRAME Elements",
+    "version": "4.2.0",
+    "compatVersion": "4.2.0",
+    "format": "1",
+    "local": true,
+    "requires": []
+}
