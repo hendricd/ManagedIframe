@@ -28,4 +28,4 @@ as Sencha Architect will be using this mechanism to import external modular pack
 design.  As such, ManagedIframe classes will be easier to get, import, customize, and build (Sencha 
 Command 3.1.2+ required).
 
-The latest branch is located {link  here}.
+The latest branch is located https://github.com/hendricd/ManagedIframe/tree/MIF_4.2 .
