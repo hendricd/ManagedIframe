@@ -19,11 +19,14 @@ MIF 4.2 Alpha1 (For Ext 4.2.*)
 
 New stuff: ( SEAMLESS Emulation and Frame event bubbling )!
 
- * cross-frame 'postMessage' emulation (for legacy browsers)
- * 'seamless' emulation (for legacy browsers)
- * full frame-document-event-bubbling (\*click, mouse\*, touch\*') events
+ * cross-frame 'postMessage' emulation (for legacy browsers, same-origin only)
+ * 'seamless' emulation (for legacy browsers, same-origin only)
+ * full frame-document-event-bubbling (\*click, mouse\* ) document-sourced events (define only the ones you
+are interested in)
  
-Ext release 4.2 has created a unique 'packaging' opportunity for Component development.  Products such
+Ext release 4.2 has created a unique 'packaging' opportunity for Component development.  
+
+Products such
 as Sencha Architect will be using this mechanism to import external modular packages for use during UI
 design.  As such, ManagedIframe classes will be easier to get, import, customize, and build (Sencha 
 Command 3.1.2+ required).
