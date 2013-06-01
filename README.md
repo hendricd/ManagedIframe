@@ -22,7 +22,7 @@ New stuff: ( SEAMLESS Emulation and Frame event bubbling )!
  * cross-frame 'postMessage' emulation (for legacy browsers, same-origin only)
  * 'seamless' emulation (for legacy browsers, same-origin only)
  * full frame-document-event-bubbling (\*click, mouse\* ) document-sourced events (define only the ones you
-are interested in) Every thing you need for drag-drop  ;)
+are interested in) Available to your Controllers and every thing you need for drag-drop  ;)
  
 Ext release 4.2 has created a unique 'packaging' opportunity for Component development.  
 
