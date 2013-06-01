@@ -19,10 +19,10 @@ MIF 4.2 Alpha1 (For Ext 4.2.*)
 
 New stuff: ( SEAMLESS Emulation and Frame event bubbling )!
 
- * cross-frame 'postMessage' emulation (for legacy browsers, same-origin only)
- * 'seamless' emulation (for legacy browsers, same-origin only)
- * full frame-document-event-bubbling (\*click, mouse\* ) document-sourced events (define only the ones you
-are interested in) Available to your Controllers and every thing you need for drag-drop  ;)
+ * cross-frame 'postMessage' emulation (for HTML5 and legacy browsers, same-origin only)
+ * 'seamless' emulation (for HTML5 and legacy browsers, same-origin only)
+ * full frame-document-event-bubbling (\*click, mouse\* ) events. Define only the ones you
+are interested in, available to your Controllers, and every thing you need for drag-drop.  ;)
  
 Ext release 4.2 has created a unique 'packaging' opportunity for Component development.  
 
