@@ -24,7 +24,7 @@ New stuff: ( SEAMLESS Emulation and Frame event bubbling )!
  * full frame-document-event-bubbling (\*click, mouse\* ) events. Define only the ones you
 are interested in, available to your Controllers, and every thing you need for drag-drop.  ;)
  
-Ext release 4.2 has created a unique 'packaging' opportunity for Component development.  
+ManagedIframe is now implmenented as a Sencha Command package for Ext release 4.2.   
 
 Products such
 as Sencha Architect will be using this mechanism to import external modular packages for use during UI
