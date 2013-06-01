@@ -5,14 +5,28 @@ A power-packed series of Javascript classes for managing IFRAMEs for Sencha prod
 
 Note: Effective Ext 4, ManagedIframe releases will be linked with the similar versioning strategy.
 
-MIF \< 4.1 (1.\*, 2.\*)
+ Previous Releases
+==========
+
+MIF 1 and 2.\* (For Ext 1,2,3.\*)
 -------------
 Legacy releases of the ManagedIframe series have NOT YET been moved here from code.google at this time.
 Versions 1.\* and 2.\* will be migrated to GIT from code.google during this process.
 
+MIF 3.0
+-------------
+There is no such thing ;)
+
+MIF 4.0 (For Ext 4.0.*)
+-------------
+Some updates planned, but nothing major.
+
 MIF 4.1 (For Ext 4.1.*)
 -------------
 The release that WILL NEVER BE.
+
+ Current Release
+==========
 
 MIF 4.2 Alpha1 (For Ext 4.2.*)
 -------------
@@ -24,7 +38,7 @@ New stuff: ( SEAMLESS Emulation and Frame event bubbling )!
  * full frame-document-event-bubbling (\*click, mouse\* ) events. Define only the ones you
 are interested in, available to your Controllers, and every thing you need for drag-drop.  ;)
  
-ManagedIframe is now implmenented as a Sencha Command package for Ext release 4.2.   
+ManagedIframe is now implemented as a Sencha Command package for Ext release 4.2.   
 
 Products such
 as Sencha Architect will be using this mechanism to import external modular packages for use during UI
