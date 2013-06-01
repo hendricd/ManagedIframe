@@ -1,4 +1,4 @@
-ManagedIframe
+ManagedIframe 4
 =============
 
 A power-packed series of Javascript classes for managing IFRAMEs for Sencha products.
