@@ -10,7 +10,7 @@ MIF \< 4.1 (1.\*, 2.\*)
 Legacy releases of the ManagedIframe series have NOT YET been moved here from code.google at this time.
 Versions 1.\* and 2.\* will be migrated to GIT from code.google during this process.
 
-MIF 4.1
+MIF 4.1 (For Ext 4.1.*)
 -------------
 The release that WILL NEVER BE.
 
