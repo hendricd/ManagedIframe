@@ -83,6 +83,16 @@
 
 
             /**
+             * @cfg {Boolean} sizeToContent
+             * True to inject content size (width/height) monitoring into same-origin frames.  If enabled,
+             * the iframe Element is resized to reflect the size of the nested document
+             * contents.
+             * @default false
+             */
+            sizeToContent : false,
+
+
+            /**
              * @cfg {Boolean} seamlessEmulation
              * True to emulate the seamless attribute on browsers that do not yet support this HTML5 feature.  When enabled,
              * all stylesheets from the parent document context are replicated to the embedded frame (same-origin only).
@@ -97,7 +107,6 @@
              * @default [ 'font-size', 'background-color',  'font-family', 'background-image', 'background-repeat', 'color']
              */
             seamlessStyles : [ 'font-size', 'background-color',  'font-family', 'background-image', 'background-repeat', 'color'],
-
 
             constructor : function(element, forceNew, doc) {
 
@@ -132,7 +141,6 @@
                 this.setName(this.dom.name || id);
 
                 this.dom.manager = this;
-                this._flyweights = {};
 
                 var cache = Ext.Element.getDocumentCache(this.dom, true);
 
@@ -253,28 +261,13 @@
 
             fly  : function(el, named) {
                 var me = this,
-                    ret = null,
-                    doc = me.getFrameDocument(),
-                    id, cached,
-                    flys = me._flyweights || (me._flyweights = {});
+                    doc = me.getFrameDocument()
 
                 if(!doc || !el) {
-                    return ret;
-                }
-                named = named || '_global';
-                el = Ext.getDom(el, false, doc);
-                if (el) {
-                    cached = flys[named] || (flys[named] = {});
-                    id = Ext.id(el);
-
-                    /*
-                    * maintain a Frame-localized cache of Flyweights
-                    */
-                    (cached[id] = cached[id] || (cached[id] = new Ext.Element.Fly())).attach(el);
-                    ret = cached[id];
+                    return null;
                 }
 
-                return ret;
+                return Ext.fly(el, named, doc);
             },
 
             /**
@@ -422,7 +415,19 @@
 
                 // Only raise if hook injection succeeded (same origin)
                 if (!reset && !me.domReadyFired &&  me._frameAction && me._renderHooks()) {
+
                     me.emulateSeamless();
+
+                    if(me.sizeToContent) {
+
+                        // calculate and report the current size of the frame documents and autoAdjust the MIFElement size
+                        me.loadFunction(
+                            { name : 'setHostSize', fn : me.self.resizeMonitorImplementation },
+                            false,
+                            true  //and execute!
+                        );
+                    }
+
                     me.domReadyFired = true;
                     me.fireDOMEvent('dataavailable');
                 }
@@ -445,18 +450,9 @@
                     me._onDocReady();
                 }
 
-
-                if(!me.isReset && me._frameAction && me.domWritable()) {
-
-                    // calculate and report the current size of the frame documents and autoAdjust the MIFElement size
-                    me.loadFunction(
-                        { name : 'setHostSize', fn : me.statics().resizeMonitorImplementation },
-                        false,
-                        true  //and execute!
-                    );
-                }
-
                 me._frameAction = !!me.eventsFollowFrameLinks;
+
+
                 me.domReadyFired = me.isReset = me.domReady = false;
                 me._targetURI = null;
             },
@@ -615,14 +611,10 @@
 
                         }, me);
 
-                        if(frameEvents._stale) {
-                            delete me._frameEvents;
-                        }
                     }
 
                 }
 
-                me._flyweights = {};
                 me.callbacks = [];
                 if(doc) {
                     Ext.Element.clearDocumentCache(doc);
@@ -654,7 +646,6 @@
                       { event : 'resize',   context : 'window' },
                       { event : 'beforeunload', context : 'window' },
                       { event : 'scroll',   context : 'document' }
-//                      { event : 'message',   context : 'parent' ,method : Ext.bind(this.onMessage, this) }
                     ];
 
                     //Append propagation events to the binding list
@@ -859,10 +850,8 @@
             setPropagateEvents : function(events) {
 
                 this.propagateEvents = (Ext.isArray(events) && events.length) ? events : false;
+                delete this._frameEvents;
 
-                if(this._frameEvents) { //reset to recalc
-                    this._frameEvents._stale = true;
-                }
             },
 
             /**
@@ -931,7 +920,6 @@
                     cssText,
                     CSS = me.CSS,
                     parentDoc = me.getParentDocument(),
-                    parentCSS,
                     sheet,
                     seamlessAssets = me.seamlessAssets || (me.seamlessAssets = []);
 
@@ -993,6 +981,9 @@
                     doc &&
                     CSS ) {
 
+                    //Under emulation, the frame is always size to the content (??)
+                    me.sizeToContent = seamless;
+
                     if(!seamless) {
                         Ext.destroy(
                             array.map(seamlessAssets, function(id) { return Ext.get(id, doc); })
@@ -1002,14 +993,13 @@
                     }
 
                     // Otherwise, Replicate all parent styleSheets
-                    parentCSS = Ext.create('Ext.ux.ManagedIframe.CSS', parentDoc);
                     ds = parentDoc.styleSheets || [];
 
                     for (i = 0, len = ds.length; i < len; i++) {
                         sheet = ds[i];
                         if( sheet &&
                             !sheet.disabled &&
-                            (cssText = parentCSS.getCssText(sheet))
+                            (cssText = CSS.getCssText(sheet))
                             ) {
                                 id = Ext.id(null, 'seamless-style-');
                                 if(CSS.createStyleSheet( cssText, id )) {
@@ -1018,7 +1008,6 @@
                         }
                     }
 
-                    Ext.destroy(parentCSS);
                 }
 
             },
@@ -1225,8 +1214,7 @@
              * @inherit
              */
             setHTML: function(html) {
-                this.update.call(this, arguments);
-                return this;
+                return this.update.apply(this, arguments);
             },
 
             /**
@@ -1588,6 +1576,9 @@
                         event,
                         result,
                         isClick,
+                        doc,
+                        docEl,
+                        body,
                         calcPageOffset = false;
 
                     e = e || view.event;
@@ -1638,11 +1629,11 @@
                                         // Get the left-based XY position.
                                         // This is because the consumer of the injected event (Ext.EventManager) will
                                         // perform its own RTL normalization.
-                                        event.frameXY = Ext.EventManager.getPageXY(e);
+                                    event.frameXY = Ext.EventManager.getPageXY(e);
 
                                     // the event from the inner document has XY relative to that document's origin,
                                     // so adjust it to use the origin of the iframe in the outer document:
-                                    event.xy = [iframeXY[0] + event.frameXY[0], iframeXY[1] + event.frameXY[1]];
+                                    event.xy = [iframeXY[0] + event.frameXY[0] , iframeXY[1] + event.frameXY[1] ];
 
                                 }
 
@@ -1777,23 +1768,27 @@
                         origin = e.origin,
                         frame,
                         data = e.data,
+                        view = e.view || e.source,
                         cmd = Ext.isString(data) ? Ext.decode(data, true) : data;
 
                         if( Ext.isObject(cmd) &&
                             (origin && origin == toOriginURI(document.location.href)) &&
-                            cmd.MIFDispatch &&
+                            view &&
                             cmd.method &&
-                            (frame = Ext.get(cmd.MIFDispatch)) &&
+                            (frame = Ext.get(view.frameElement)) &&
+                            frame.sizeToContent &&
                             frame.isManagedIframeElement &&
                             frame.dom
                               ) {
 
                                 if(cmd.method in frame) {
                                     frame[cmd.method].apply(frame, Ext.Array.from(cmd.args) );
-                                    //frame.highlight();
+                                    frame.highlight();
                                 }
+
                         }
-                        console.warn('onmessage ', frame , cmd || e.data, origin);
+                        //console.warn('onmessage ', frame , cmd || e.data, view);
+
 
                 },
 

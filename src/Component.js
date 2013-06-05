@@ -35,7 +35,7 @@
         /* Begin Definitions */
         extend      : 'Ext.Component',
         alias       : 'widget.miframe',
-        uses :      [ 'Ext.ux.ManagedIframe.Element', 'Ext.ux.ManagedIframe.Error' ],
+        uses :      [ 'Ext.ux.ManagedIframe.Element', 'Ext.ux.ManagedIframe.Error', 'Ext.XTemplate' ],
 
         /* End Definitions */
 
@@ -214,6 +214,14 @@
              */
             eventsFollowFrameLinks : true,
 
+            /**
+             * @cfg {Boolean} sizeToContent
+             * True to inject content size (width/height) monitoring into same-origin frames.  If enabled,
+             * the iframeElement is resized (not it's Component) to reflect the size of the nested document
+             * contents.
+             * @default false
+             */
+            sizeToContent : false,
 
             /**
              * @cfg {String} defaultSrc
@@ -379,6 +387,8 @@
 
                 //Suppress dataavailable event chatter during initialization
                 frame.eventsFollowFrameLinks = false;
+                //frame.sizeToContent = false;
+
                 me.setIframeSeamless(me.getIframeSeamless());
 
                 /*
@@ -413,10 +423,11 @@
                 });
 
                 var src = me.getSrc() || me.getDefaultSrc();
-                if(me.autoLoad) {
+                if(me.getLoader()) {
 
                     frame.isReset = Ext.isIE;
                     me.setEventsFollowFrameLinks(followLinks);
+                    frame.sizeToContent = me.getSizeToContent();
 
                 } else if(src || me.data || me.html) {
 
@@ -429,19 +440,21 @@
                             function(){
                                 var me = this;
                                 me.setEventsFollowFrameLinks(followLinks);
+                                frame.sizeToContent = me.getSizeToContent();
+
                                 if(src) {
                                     me.setSrc();
                                 } else if(me.data || me.html) {
-                                    me.update(me.data || me.html);
-                                }
 
+                                    me.update(me.data || me.html);
+
+                                }
                             },
                             me
                         ]
                     );
                 }
             }
-
 
         },
 
@@ -572,6 +585,18 @@
                 name = frame.dom.name;
             }
             return name;
+        },
+
+        applySizeToContent : function(adjust) {
+            adjust = !!adjust;
+            var me = this,
+                frame =  me.getIframeElement();
+
+            if(me.rendered && frame) {
+                frame.sizeToContent = adjust;
+            }
+
+            return adjust;
         },
 
         /*
@@ -745,43 +770,43 @@
          */
         update : function(htmlOrData, loadScripts, callback, scope) {
             var me = this,
-                content = htmlOrData;
+                isData = (me.tpl && !Ext.isString(htmlOrData)),
+                el;
 
-            if (me.contentTpl && (Ext.isArray(content) || Ext.isObject(content))) {
-                me.data = content;
-                content = me.applyTemplate('contentTpl', content || {});
+            if (isData) {
+                me.data = htmlOrData;
+            } else {
+                me.html = Ext.isObject(htmlOrData) ? Ext.DomHelper.markup(htmlOrData) : htmlOrData;
             }
 
             if (me.rendered) {
-                if(me.getAutoMask() && me.isVisible(true)) {
-                    me.setLoading(me.getMaskMessage() || '');
+                el = me.getIframeElement();
+                if (isData) {
+                    el.update(me.applyTemplate(me.tpl, htmlOrData || {}), loadScripts, callback, scope);
+                } else {
+                    el.update(me.html, loadScripts, callback, scope);
                 }
-
-                var frame = me.getContentTarget();
-                Ext.defer(
-                    function(){
-                        frame.update(content, loadScripts, callback, scope);
-                        Ext.defer(this.setLoading, 100, this ,[false]);
-                    },
-                    me.getAutoMask() ? 100 : 10 ,
-                    me,
-                    [ ]
-                );
+                me.updateLayout();
             }
             return me;
+
         },
 
-        /*
-        * override to provide custom Template output
-        */
+        /**
+         * Convenience method (overridable) to permit further customization of Templated output.
+         * @param {String/XTemplate} tpl The string name of the local template or an Ext.Xtemplate instance.
+         * @param {Mixed} content Usually an Array or Object hash of values used to generate the desired output
+         * @return {String}
+         */
         applyTemplate : function(tpl, content) {
-            var me=this;
-            if(tpl && Ext.isString(tpl)) {
-                tpl= me.getTpl(tpl);
-            }
+
+            var me = this;
+            tpl = (tpl && tpl.isTemplate) ? tpl : Ext.XTemplate.getTpl(this, 'tpl');
+
             if(tpl.isTemplate){
-                return tpl.apply(content);
+                return tpl.applyTemplate(content);
             }
+            return '';
         },
 
         /*

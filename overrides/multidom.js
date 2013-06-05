@@ -13,6 +13,8 @@
  *
  * Commercial use is prohibited without a Commercial Developement License. See
  * http://licensing.theactivegroup.com.
+
+ Note:  This release in functionally MATCHED to Ext 4.2.0+
  *
  */
 //@tag dom,core
@@ -101,8 +103,6 @@
         return !!view && Ext.isFunction(view.getComputedStyle);  //coerce assertion to bool
     }();
 
-
-    Ext.supports.init();
 
     Element.addMethods({
         remove : function(){
@@ -527,15 +527,15 @@
 
     Element.Fly.addMethods ({
 
-            attach: function (dom) {
+        attach: function (dom) {
 
-                // Attach to the passed DOM element. The same code as in Ext.Fly
-                this.dom = dom;
-                // Use cached data if there is existing cached data for the referenced DOM element,
-                // otherwise it will be created when needed by getCache.
-                this.$cache = Element.getElementCache(dom, true);
-                return this;
-            }
+            // Attach to the passed DOM element. The same code as in Ext.Fly
+            this.dom = dom;
+            // Use cached data if there is existing cached data for the referenced DOM element,
+            // otherwise it will be created when needed by getCache.
+            this.$cache = Element.getElementCache(dom, true);
+            return this;
+        }
 
     });
 
@@ -574,6 +574,35 @@
             }
             return el.id;
         },
+
+        fly : function(el, named, doc) {
+                var me = this,
+                    ret = null,
+                    doc = doc || document,
+                    docCache,
+                    id, cached, flys;
+
+
+                if(!doc || !el) {
+                    return ret;
+                }
+                named = named || '_global';
+                el = Ext.getDom(el, false, doc);
+                if (el) {
+                    docCache = Element.getDocumentCache(el, true);
+                    flys = docCache.__flyweights || (docCache.__flyweights = {skipGarbageCollection : true});
+                    cached = flys[named] || (flys[named] = {});
+                    id = Ext.id(el);
+
+                    /*
+                    * maintain a Frame-localized cache of Flyweights
+                    */
+                    (ret = cached[id] = cached[id] || (cached[id] = new Ext.Element.Fly())).attach(el);
+                }
+
+                return ret;
+            },
+
 
         removeNode : function(n){
 
@@ -924,17 +953,14 @@
          */
         getPageXY: function(event) {
             event = event.browserEvent || event;
-            var x = 'pageX' in event ?  event.pageX : null,
+            var x = event.pageX,
                 y = event.pageY,
-                doc ,
-                docEl,
-                body;
+                doc = event.target.ownerDocument,
+                docEl = doc && doc.documentElement,
+                body = doc && doc.body;
 
             // pageX/pageY not available (undefined, not null), use clientX/clientY instead
-            if ( x === null) {
-                doc = Element.getParentDocument(this.getTarget(event));
-                docEl = doc.documentElement;
-                body = doc.body;
+            if (!x && x !== 0) {
                 x = event.clientX + (docEl && docEl.scrollLeft || body && body.scrollLeft || 0) - (docEl && docEl.clientLeft || body && body.clientLeft || 0);
                 y = event.clientY + (docEl && docEl.scrollTop  || body && body.scrollTop  || 0) - (docEl && docEl.clientTop  || body && body.clientTop  || 0);
             }
@@ -944,6 +970,45 @@
     });
 
     Ext.override(Ext.EventObjectImpl, {
+
+         /**
+         * Returns true if the target of this event is a child of el.  Unless the allowEl parameter is set, it will return false if if the target is el.
+         * Example usage:<pre><code>
+    // Handle click on any child of an element
+    Ext.getBody().on('click', function(e){
+        if(e.within('some-el')){
+            alert('Clicked on a child of some-el!');
+        }
+    });
+
+    // Handle click directly on an element, ignoring clicks on child nodes
+    Ext.getBody().on('click', function(e,t){
+        if((t.id == 'some-el') && !e.within(t, true)){
+            alert('Clicked directly on some-el!');
+        }
+    });
+    </code></pre>
+         * @param {String/HTMLElement/Ext.Element} el The id, DOM element or Ext.Element to check
+         * @param {Boolean} related (optional) true to test if the related target is within el instead of the target
+         * @param {Boolean} allowEl (optional) true to also check if the passed element is the target or related target
+         * @return {Boolean}
+         */
+        within : function(el, related, allowEl){
+            if(el){
+                var t = related ? this.getRelatedTarget() : this.getTarget(),
+                    doc = Element.getParentDocument(t) || document,
+                    result;
+
+                if (t) {
+                    result = Ext.fly(el, '_within', doc).contains(t);
+                    if (!result && allowEl) {
+                        result = t == Ext.getDom(el, false, doc);
+                    }
+                    return result;
+                }
+            }
+            return false;
+        },
 
         // Expanded for 'message' support
         setEvent: Ext.EventObject.setEvent = function(event, freezeEvent){
@@ -1567,15 +1632,18 @@
         clearDocumentCache : function(doc){
             // Purge all elements in the cache
             var el,
+                dom,
                 cache = Element.getDocumentCache(doc, false),
                 id = doc && Ext.id(doc),
                 entry;
 
             if(cache) {
+                delete cache.__flyweights;
                 for (el in cache) {
                     if (cache.hasOwnProperty(el)) {
                         entry = cache[el];
-                        Ext.EventManager.removeAll(entry.el || entry.dom);
+                        dom = entry.el || entry.dom;
+                        !dom || Ext.EventManager.removeAll(dom);
                     }
                 }
                 if(id) delete DC[id];
